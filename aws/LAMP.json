@@ -1,0 +1,513 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+
+	"Conditions": {
+		"CreateSmallResources": {
+			"Fn::Equals": [{
+				"Ref": "Infra"
+			}, "small"]
+		},
+		"CreateMediumResources": {
+			"Fn::Equals": [{
+				"Ref": "Infra"
+			}, "medium"]
+		},
+		"CreateLargeResources": {
+			"Fn::Equals": [{
+				"Ref": "Infra"
+			}, "large"]
+		}
+	},
+
+	"Parameters": {
+
+		"Infra": {
+			"Description": "LAMP”,
+			"Default": "small",
+			"Type": "String",
+			"AllowedValues": ["small", "medium", "large"]
+		},
+
+		"ProjectId": {
+			"NoEcho": "false",
+			"Description": “Projeto LAMP“,
+			"Type": "String",
+			"MinLength": "1",
+			"MaxLength": "16",
+      "AllowedPattern" : "[\\x20-\\x7E]*",
+      "ConstraintDescription" : "can contain only ASCII characters."
+
+		},
+
+		"ActivationDate": {
+			"NoEcho": "false",
+			"Description": "Data Projeto",
+			"Type": "String",
+			"MinLength": "8",
+			"MaxLength": "8"
+		}
+	},
+
+	"Resources": {
+
+		"VPC": {
+			"Type": "AWS::EC2::VPC",
+			"Properties": {
+				"EnableDnsSupport": true,
+				"EnableDnsHostnames": true,
+				"CidrBlock": "10.0.0.0/16",
+				"Tags": [{
+						"Key": "stack",
+						"Value": {
+							"Ref": "AWS::StackId"
+						}
+					}, {
+						"Key": "Name",
+						"Value": "VPC-LAMP"
+					},
+
+					{
+						"Key": "Project_ID",
+						"Value": {
+							"Ref": "ProjectId"
+						}
+					}, {
+						"Key": "Activation_Date",
+						"Value": {
+							"Ref": "ActivationDate"
+						}
+					}
+				]
+			}
+		},
+		"SubnetZone1": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"AvailabilityZone": "us-east-1a",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.0.0/24",
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"SubnetZone2": {
+			"Type": "AWS::EC2::Subnet",
+			"Properties": {
+				"AvailabilityZone": "us-east-1b",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"CidrBlock": "10.0.1.0/24",
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"InternetGateway": {
+			"Type": "AWS::EC2::InternetGateway",
+			"Properties": {
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Name",
+					"Value": "IGW-LAMP"
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"AttachGateway": {
+			"Type": "AWS::EC2::VPCGatewayAttachment",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"InternetGatewayId": {
+					"Ref": "InternetGateway"
+				}
+			}
+		},
+		"RouteTableZone1": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Name",
+					"Value": "RTZone1-Lamp"
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"RouteTableZone2": {
+			"Type": "AWS::EC2::RouteTable",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Name",
+					"Value": "RTZone2-Lamp"
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"RouteZone1": {
+			"Type": "AWS::EC2::Route",
+			"DependsOn": "AttachGateway",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "RouteTableZone1"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"GatewayId": {
+					"Ref": "InternetGateway"
+				}
+			}
+		},
+		"RouteZone2": {
+			"Type": "AWS::EC2::Route",
+			"DependsOn": "AttachGateway",
+			"Properties": {
+				"RouteTableId": {
+					"Ref": "RouteTableZone2"
+				},
+				"DestinationCidrBlock": "0.0.0.0/0",
+				"GatewayId": {
+					"Ref": "InternetGateway"
+				}
+			}
+		},
+		"SubnetRouteTableAssociationZone1": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"SubnetId": {
+					"Ref": "SubnetZone1"
+				},
+				"RouteTableId": {
+					"Ref": "RouteTableZone1"
+				}
+			}
+		},
+		"SubnetRouteTableAssociationZone2": {
+			"Type": "AWS::EC2::SubnetRouteTableAssociation",
+			"Properties": {
+				"SubnetId": {
+					"Ref": "SubnetZone2"
+				},
+				"RouteTableId": {
+					"Ref": "RouteTableZone2"
+				}
+			}
+		},
+
+		"IPAddress": {
+			"Type": "AWS::EC2::EIP"
+		},
+
+		"IPAssoc": {
+			"Type": "AWS::EC2::EIPAssociation",
+			"Properties": {
+				"InstanceId": {
+					"Ref": "WebInstance"
+				},
+				"EIP": {
+					"Ref": "IPAddress"
+				}
+			}
+		},
+
+		"EC2SecurityGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"Properties": {
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"GroupDescription": "EC2 security group",
+				"Tags": [{
+					"Key": "stack",
+					"Value": {
+						"Ref": "AWS::StackId"
+					}
+				}, {
+					"Key": "Name",
+					"Value": "EC2SecurityGroup-LAMP"
+				}],
+				"SecurityGroupIngress": [{
+					"IpProtocol": "tcp",
+					"FromPort": "22",
+					"ToPort": "22",
+					"CidrIp": "54.207.9.253/32"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "22",
+					"ToPort": "22",
+					"CidrIp": "200.98.206.194/32"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "10050",
+					"ToPort": "10051",
+					"CidrIp": "54.86.144.79/32"
+				}, {
+					"IpProtocol": "tcp",
+					"FromPort": "80",
+					"ToPort": "80",
+					"CidrIp": "0.0.0.0/0"
+				}]
+			}
+		},
+
+		"EBSDATA": {
+			"Type": "AWS::EC2::Volume",
+      	"Properties": {
+				"VolumeType": "gp2",
+				"Size": "100",
+				"AvailabilityZone": {
+					"Fn::GetAtt": ["WebInstance", "AvailabilityZone"]
+				},
+				"Tags": [{
+					"Key": "Name",
+					"Value": "EbsData"
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			},
+			"DeletionPolicy": "Snapshot"
+		},
+
+		"MountPoint": {
+			"Type": "AWS::EC2::VolumeAttachment",
+				"Properties": {
+				      "InstanceId": {
+					"Ref": "WebInstance"
+				},
+    			"VolumeId": {"Ref": "EBSDATA"},
+          "Device": "/dev/sdf"
+    }
+  },
+
+  "EBSBACKUP": {
+    "Type": "AWS::EC2::Volume",
+      "Properties": {
+      "VolumeType": "gp2",
+      "Size": "100",
+      "AvailabilityZone": {
+        "Fn::GetAtt": ["WebInstance", "AvailabilityZone"]
+      },
+      "Tags": [{
+        "Key": "Name",
+        "Value": "EbsBackup"
+      }, {
+        "Key": "Project_ID",
+        "Value": {
+          "Ref": "ProjectId"
+        }
+      }, {
+        "Key": "Activation_Date",
+        "Value": {
+          "Ref": "ActivationDate"
+        }
+      }]
+    },
+    "DeletionPolicy": "Snapshot"
+  },
+
+  "MountPoint1": {
+    "Type": "AWS::EC2::VolumeAttachment",
+      "Properties": {
+            "InstanceId": {
+        "Ref": "WebInstance"
+      },
+        "VolumeId": {"Ref": "EBSBACKUP"},
+        "Device": "/dev/sdg"
+  }
+},
+
+		"WebInstance": {
+			"Type": "AWS::EC2::Instance",
+			"Properties": {
+				"Monitoring": "true",
+				"ImageId": "ami-60b6c60a",
+
+				"InstanceType": {
+					"Fn::If": ["CreateSmallResources", "t2.medium", {
+						"Fn::If": ["CreateMediumResources", "m4.large", "m4.xlarge"]
+					}]
+				},
+				"KeyName": "Teste",
+				"UserData": {
+					"Fn::Base64": {
+						"Fn::Join": ["", [
+							"#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=HOSTNAME_INSTANCE\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+						]]
+					}
+				},
+				"NetworkInterfaces": [{
+					"AssociatePublicIpAddress": true,
+					"GroupSet": [{
+						"Ref": "EC2SecurityGroup"
+					}],
+					"DeviceIndex": "0",
+					"DeleteOnTermination": true,
+					"SubnetId": {
+						"Ref": "SubnetZone1"
+					}
+				}],
+				"Tags": [{
+					"Key": "Name",
+					"Value": "WebServer-Lamp"
+				}, {
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+				}, {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		},
+		"ELBSecGroup": {
+			"Type": "AWS::EC2::SecurityGroup",
+			"DependsOn": ["VPC", "AttachGateway"],
+			"Properties": {
+				"GroupDescription": "Security Group for ELB",
+				"VpcId": {
+					"Ref": "VPC"
+				},
+				"SecurityGroupIngress": [{
+					"IpProtocol": "tcp",
+					"FromPort": "80",
+					"ToPort": "80",
+					"CidrIp": "0.0.0.0/0"
+				}],
+        "Tags": [{
+          "Key": "Name",
+          "Value": "ELBSecGroup"
+        }
+      ]
+			}
+		},
+
+		"ELB": {
+			"Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+			"Properties": {
+				"HealthCheck": {
+					"Target": "HTTP:80/",
+					"HealthyThreshold": "3",
+					"UnhealthyThreshold": "5",
+					"Interval": "30",
+					"Timeout": "5"
+				},
+				"Instances": [{
+					"Ref": "WebInstance"
+				}],
+				"LoadBalancerName": "ELB-Lamp",
+				"Listeners": [{
+					"LoadBalancerPort": "80",
+					"InstancePort": "80",
+					"Protocol": "HTTP"
+				}],
+				"SecurityGroups": [{
+					"Ref": "ELBSecGroup"
+				}],
+				"Subnets": [{
+					"Ref": "SubnetZone1"
+				}, {
+					"Ref": "SubnetZone2"
+				}],
+				"Tags": [{
+					"Key": "Project_ID",
+					"Value": {
+						"Ref": "ProjectId"
+					}
+          },
+          {
+					"Key": "Activation_Date",
+					"Value": {
+						"Ref": "ActivationDate"
+					}
+				}]
+			}
+		}
+	}
+}

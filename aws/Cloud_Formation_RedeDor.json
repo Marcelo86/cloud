@@ -1,0 +1,1185 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Resources": {
+
+        "VPC": {
+            "Type": "AWS::EC2::VPC",
+            "Properties": {
+                "EnableDnsSupport": true,
+                "EnableDnsHostnames": true,
+                "CidrBlock": "10.0.0.0/16",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "VPC-Prontmed"
+                }]
+            }
+        },
+        "SubnetZone1": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.0.0/24",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Public Subnet"
+                }]
+            }
+        },
+        "SubnetZone2": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.1.0/24",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Public Subnet"
+                }]
+            }
+        },
+        "SubnetZone3": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "us-west-1a",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.3.0/24",
+                "Tags": [{
+                    "Key": "stack",
+                    "Value": {
+                        "Ref": "AWS::StackId"
+                    }
+                }]
+            }
+        },
+        "SubnetZone4": {
+            "Type": "AWS::EC2::Subnet",
+            "Properties": {
+                "AvailabilityZone": "us-west-1b",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "CidrBlock": "10.0.4.0/24",
+                "Tags": [{
+                    "Key": "stack",
+                    "Value": {
+                        "Ref": "AWS::StackId"
+                    }
+                }]
+            }
+        },
+
+        "InternetGateway": {
+            "Type": "AWS::EC2::InternetGateway",
+            "Properties": {
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "IGW-RDSL"
+                }]
+            }
+        },
+        "AttachGateway": {
+            "Type": "AWS::EC2::VPCGatewayAttachment",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "InternetGatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "RouteTableZone1": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "RTZone1-Lamp"
+                }]
+            }
+        },
+        "RouteTableZone2": {
+            "Type": "AWS::EC2::RouteTable",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "RTZone2-RDSL"
+                }]
+            }
+        },
+        "RouteZone1": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "AttachGateway",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "RouteTableZone1"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "RouteZone2": {
+            "Type": "AWS::EC2::Route",
+            "DependsOn": "AttachGateway",
+            "Properties": {
+                "RouteTableId": {
+                    "Ref": "RouteTableZone2"
+                },
+                "DestinationCidrBlock": "0.0.0.0/0",
+                "GatewayId": {
+                    "Ref": "InternetGateway"
+                }
+            }
+        },
+        "SubnetRouteTableAssociationZone1": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "SubnetZone1"
+                },
+                "RouteTableId": {
+                    "Ref": "RouteTableZone1"
+                }
+            }
+        },
+        "SubnetRouteTableAssociationZone2": {
+            "Type": "AWS::EC2::SubnetRouteTableAssociation",
+            "Properties": {
+                "SubnetId": {
+                    "Ref": "SubnetZone2"
+                },
+                "RouteTableId": {
+                    "Ref": "RouteTableZone2"
+                }
+            }
+        },
+
+        "IPAddress1": {
+            "Type": "AWS::EC2::EIP"
+        },
+        "IPAddress2": {
+            "Type": "AWS::EC2::EIP"
+        },
+        "IPAddress3": {
+            "Type": "AWS::EC2::EIP"
+        },
+        "IPAddress4": {
+            "Type": "AWS::EC2::EIP"
+        },
+
+        "IPASSOCIATIONFRONTENDAPP1": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "InstanceId": {
+                    "Ref": “ProntmedFrontendApp1"
+                },
+                "EIP": {
+                    "Ref": "IPAddress1"
+                }
+            }
+        },
+        "IPASSOCIATIONFRONTENDAPP2": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "InstanceId": {
+                    "Ref": "ProntmedFrontendApp2"
+                },
+                "EIP": {
+                    "Ref": "IPAddress2"
+                }
+            }
+        },
+        "IPASSOCIATIONFRONTENDAPP3": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "InstanceId": {
+                    "Ref": "BackOffice1"
+                },
+                "EIP": {
+                    "Ref": "IPAddress3"
+                }
+            }
+        },
+        "IPASSOCIATIONFRONTENDAPP4": {
+            "Type": "AWS::EC2::EIPAssociation",
+            "Properties": {
+                "InstanceId": {
+                    "Ref": "BackOffice2"
+                },
+                "EIP": {
+                    "Ref": "IPAddress4"
+                }
+            }
+        },
+
+        "SGAPPFRONTEND": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGAPPFRONTEND"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGAPPBACKOFFICE": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGAPPBACKOFFICE"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGAPPCONFIGURACAO": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGAPPCONFIGURACAO"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGELASTICACHEREDIS": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGELASTICACHEREDIS"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGELASTICACHEMONGODBCONFIG": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGELASTICACHEMONGODBCONFIG"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGAPPJENKIS": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "JENKINS"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "22",
+                    "ToPort": "22",
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGRDSMSSQL": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "RDS security group",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "SGRDSMSSQL"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "3306",
+                    "ToPort": "3306",
+                    "SourceSecurityGroupId": {
+                        "Ref": "SGAPPFRONTEND"
+                    }
+                }]
+            }
+        },
+
+        "RDSSubnetGroup": {
+            "Type": "AWS::RDS::DBSubnetGroup",
+            "Properties": {
+                "DBSubnetGroupDescription": "RDS Subnet Group",
+                "SubnetIds": [{
+                    "Ref": "SubnetZone1"
+                }, {
+                    "Ref": "SubnetZone2"
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "DB-Subnet-Group-Lamp"
+                }]
+            }
+        },
+        "RDSInstance": {
+            "Type": "AWS::RDS::DBInstance",
+            "Properties": {
+                "PubliclyAccessible": "true",
+                "DBInstanceIdentifier": "Prontmed-RDS",
+                "AllocatedStorage": "10",
+                "DBInstanceClass": "db.t2.medium",
+                "StorageType": "gp2",
+                "VPCSecurityGroups": [{
+                    "Ref": "SGRDSMSSQL"
+                }],
+                "DBSubnetGroupName": {
+                    "Ref": "RDSSubnetGroup"
+                },
+                "Engine": "MySQL",
+                "EngineVersion": "5.5",
+                "MasterUsername": "lamp",
+                "MasterUserPassword": "123lamp543",
+                "MultiAZ": "false"
+            }
+        },
+
+        "ProntmedFrontendApp1DskA": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "ProntmedFrontendApp2DskB": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "BackOffice1DskC": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "BackOffice2DskD": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "CONFIGURACAODskE": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "EC2MONGO1DskF": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "EC2MONGO2DskG": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "EC2MONGO3DskH": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "EC2JENKINSDskI": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "VolumeType": "gp2",
+                "Size": "10",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "Tags": [{
+                    "Key": "EBS",
+                    "Value": "LAMP"
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+
+        "ProntmedFrontendApp1": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "ProntmedFrontendApp1DskA"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=WebServer1-Lamp\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPFRONTEND"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone1"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Frontend-App-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+        "ProntmedFrontendApp2": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "ProntmedFrontendApp2DskB"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=WebServer2-Lamp\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPFRONTEND"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone2"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Frontend-App-2"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "BackOffice1": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "BackOffice1DskC"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice1\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPBACKOFFICE"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone1"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-BackOffice-App-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+        "BackOffice2": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "BackOffice2DskD"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPBACKOFFICE"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone2"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-BackOffice-App-2"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "CONFIGURACAO": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "CONFIGURACAODskE"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPCONFIGURACAO"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone1"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Configuracao-App-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "EC2MONGO1": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "EC2MONGO1DskF"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGELASTICACHEMONGODBCONFIG"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone2"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Mongo-Db-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+        "EC2MONGO2": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "EC2MONGO2DskG"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGELASTICACHEMONGODBCONFIG"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone1"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Mongo-Db-2"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+        "EC2MONGO3": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["1", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "EC2MONGO3DskH"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGELASTICACHEMONGODBCONFIG"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone2"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Mongo-Config-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "EC2JENKINS": {
+            "Type": "AWS::EC2::Instance",
+
+            "Properties": {
+                "Monitoring": "true",
+                "AvailabilityZone": {
+                    "Fn::Select": ["0", {
+                        "Fn::GetAZs": ""
+                    }]
+                },
+                "ImageId": "ami-23e8a343",
+                "InstanceType": "t2.micro",
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "EC2JENKINSDskI"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": ["", [
+                            "#!/bin/bash -ex\n\n#Script de Bootstrap 1.0 - ADTsys#\n#2015/Nov/09#\n\n\n#Preencher Variaveis#\n\n\nMINION_NAME=BackOffice2\nSALTMASTERIP=\"52.0.103.139\"\n#CUSTOMER_NAME=\n\n\n###### SETUP USER-DATA LOGGING ######\nexec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1\n\n\n\n\n#OS Detection, Ubuntu ou EC2 Linux (Bem Rudimentar, ainda)#\n\nif hash lsb_release; then\n\techo \"Ubuntu Release detected .. initiating installation script\"\n\n\n\t#INSTALLING SALT REPO AND SALT-MINION##\n\tapt-get install -y apt-transport-https software-properties-common\n\twget -O - https://erepo.saltstack.com/sse/4.1/ubuntu/SALTSTACK-GPG-KEY.pub | sudo apt-key add -\n\techo \"deb https://erepo.saltstack.com/sse/4.1/ubuntu/ trusty main\" >> /etc/apt/sources.list\n\tapt-get update\n\tapt-get install -y salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"1c\\$MINION_NAME\" /etc/hostname\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t#Restarting and daemonizing#\n\techo \"salt-minion &\" >> /etc/rc.local\n\tsalt-minion restart\n\t\n\t\n\n\n\n\telse\n\techo \"Other OS Detected (AMZ, RH, CENTOS)\"\n    RELEASE=$(head -n 1 /etc/issue |  awk '{print $1}');\n\n\t##INSTALLING SALT REPO AND SALT-MINION##\n\tyum -y install https://erepo.saltstack.com/sse/4.0/rhel/sse-repo-4.0.el5.rpm\n\n\n\t##CHECK IF ITS AMAZON EC2 IMAGE FOR CORRECTIVE ACTION BELOW## \n\t\tif [ $RELEASE == 'Amazon' ]; then \n\t\t\tsed -i 's/\\$releasever/5/' /etc/yum.repos.d/sse-4.0.repo\n\t\n\t\tfi\n\n\tyum clean all\n\tyum -y install salt-enterprise-minion\n\n\t##Edit Salt-minion configuration and master targetting##\n\tsed -i \"s/#master: salt/master: $SALTMASTERIP/\" /etc/salt/minion\n\tsed -i \"s/#id:/id: $MINION_NAME/\" /etc/salt/minion\n\n\t##Changing hostname pattern##\n\tsed -i \"s/HOSTNAME=localhost.localdomain/HOSTNAME=$MINION_NAME.localdomain/\" /etc/sysconfig/network\n\thostname $MINION_NAME\n\techo \"127.0.0.1 $MINION_NAME\" >> /etc/hosts\n\n\t##Restarting and daemonizing#\n\tservice salt-minion restart\n    \tchkconfig salt-minion on\n    \n\nfi\n"
+                        ]]
+                    }
+                },
+                "NetworkInterfaces": [{
+                    "AssociatePublicIpAddress": true,
+                    "GroupSet": [{
+                        "Ref": "SGAPPJENKIS"
+                    }],
+                    "DeviceIndex": "0",
+                    "DeleteOnTermination": true,
+                    "SubnetId": {
+                        "Ref": "SubnetZone1"
+                    }
+                }],
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "Prontmed-Jenkins-1"
+                }, {
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "SGELBFRONTEND": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "DependsOn": ["VPC", "AttachGateway"],
+            "Properties": {
+                "GroupDescription": "Security Group for ELB",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+        "SGELBBACKOFFICE": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "DependsOn": ["VPC", "AttachGateway"],
+            "Properties": {
+                "GroupDescription": "Security Group for ELB",
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "80",
+                    "ToPort": "80",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+
+        "ELBFRONTEND": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "HealthCheck": {
+                    "Target": "HTTP:80/",
+                    "HealthyThreshold": "3",
+                    "UnhealthyThreshold": "5",
+                    "Interval": "30",
+                    "Timeout": "5"
+                },
+                "Instances": [{
+                    "Ref": "ProntmedFrontendApp1"
+                }, {
+                    "Ref": "ProntmedFrontendApp2"
+                }],
+                "LoadBalancerName": "ELB-Prontmed-Frontend",
+                "Listeners": [{
+                    "LoadBalancerPort": "80",
+                    "InstancePort": "80",
+                    "Protocol": "HTTP"
+                }],
+                "SecurityGroups": [{
+                    "Ref": "SGELBFRONTEND"
+                }],
+                "Subnets": [{
+                    "Ref": "SubnetZone1"
+                }, {
+                    "Ref": "SubnetZone2"
+                }],
+                "Tags": [{
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+        "ELBBACKOFFICE": {
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties": {
+                "HealthCheck": {
+                    "Target": "HTTP:80/",
+                    "HealthyThreshold": "3",
+                    "UnhealthyThreshold": "5",
+                    "Interval": "30",
+                    "Timeout": "5"
+                },
+                "Instances": [{
+                    "Ref": "BackOffice1"
+                }, {
+                    "Ref": "BackOffice2"
+                }],
+                "LoadBalancerName": "ELB-Prontmed-BackOffice",
+                "Listeners": [{
+                    "LoadBalancerPort": "80",
+                    "InstancePort": "80",
+                    "Protocol": "HTTP"
+                }],
+                "SecurityGroups": [{
+                    "Ref": "SGELBBACKOFFICE"
+                }],
+                "Subnets": [{
+                    "Ref": "SubnetZone1"
+                }, {
+                    "Ref": "SubnetZone2"
+                }],
+                "Tags": [{
+                    "Key": "project_id",
+                    "Value": "PV-1986"
+                }]
+            }
+        },
+
+        "rededorbucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "rededorbucket",
+                "Tags": [{
+                    "Key": "Name",
+                    "Value": "S3 Bucket"
+                }]
+            }
+        },
+        "SGREDIS": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "VPC"
+                },
+                "GroupDescription": "EC2 security group",
+                "Tags": [{
+                    "Key": "stack",
+                    "Value": {
+                        "Ref": "AWS::StackId"
+                    }
+                }, {
+                    "Key": "Name",
+                    "Value": "SGREDIS"
+                }],
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": "6379",
+                    "ToPort": "6379",
+                    "CidrIp": "0.0.0.0/0"
+                }]
+            }
+        },
+
+        "REDISSUB": {
+            "Type": "AWS::ElastiCache::SubnetGroup",
+            "Properties": {
+                "Description": "Cache Subnet for UAT",
+                "SubnetIds": [{
+                    "Ref": "SubnetZone3"
+                }, {
+                    "Ref": "SubnetZone4"
+                }]
+            }
+        },
+
+        "BasicReplicationGroup": {
+            "Type": "AWS::ElastiCache::ReplicationGroup",
+            "Properties": {
+                "AutomaticFailoverEnabled": "true",
+                "AutoMinorVersionUpgrade": "true",
+                "CacheNodeType": "cache.t2.micro",
+                "CacheSubnetGroupName": {
+                    "Ref": "REDISSUB"
+                },
+                "Engine": "redis",
+                "EngineVersion": "3.2",
+                "NumNodeGroups": "2",
+                "ReplicasPerNodeGroup": "1",
+                "Port": "6379",
+                "PreferredMaintenanceWindow": "sun:05:00-sun:09:00",
+                "ReplicationGroupDescription": "A sample replication group",
+                "SecurityGroupIds": [{
+                    "Ref": "SGREDIS"
+                }]
+            }
+        },
+
+        "mainredis": {
+            "Type": "AWS::ElastiCache::CacheCluster",
+            "Properties": {
+                "AutoMinorVersionUpgrade": "true",
+                "CacheNodeType": "cache.t2.micro",
+                "CacheSubnetGroupName": {
+                    "Ref": "REDISSUB"
+                },
+                "ClusterName": "mainredis",
+                "Engine": "redis",
+                "NumCacheNodes": "1",
+                "VpcSecurityGroupIds": [{
+                    "Fn::GetAtt": ["SGREDIS", "GroupId"]
+                }]
+            }
+        }
+    }
+}
